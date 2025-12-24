@@ -1,0 +1,455 @@
+\documentclass[12pt,a4paper]{article}
+
+% Encodage et langue
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% Mise en page
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% Graphiques et figures
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{array}
+
+% Maths
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Code
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Configuration des listings pour le code C
+\lstset{
+    language=C,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=5pt,
+    breaklines=true,
+    showstringspaces=false,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    captionpos=b
+}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Espaces insécables pour les références
+\usepackage{xspace}
+
+% Bibliographie
+\usepackage{cite}
+
+% En-tête et pied de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Projet Architecture HPC}
+\fancyhead[R]{\leftmark}
+\fancyfoot[C]{\thepage}
+
+% Titre
+\title{
+    \vspace{-2cm}
+    \textbf{Projet en Architecture des Processeurs\\Hautes Performances}\\
+    \vspace{0.5cm}
+    \large Étude de la Hiérarchie Mémoire\\
+    \vspace{1cm}
+    \normalsize Master Informatique\\
+    Université Côte d'Azur
+}
+
+\author{
+    NOM Prénom\\
+    \texttt{prenom.nom@etu.univ-cotedazur.fr}
+}
+
+\date{\today}
+
+\begin{document}
+
+% Page de titre
+\maketitle
+\thispagestyle{empty}
+\newpage
+
+% Table des matières
+\tableofcontents
+\newpage
+
+%==============================================================================
+\section{Introduction}
+%==============================================================================
+
+Ce rapport présente les résultats du projet d'architecture des processeurs hautes performances, portant sur l'étude expérimentale de la hiérarchie mémoire. Les objectifs de ce projet sont~:
+
+\begin{itemize}
+    \item Comprendre le fonctionnement des différents niveaux de cache d'un processeur moderne
+    \item Évaluer expérimentalement les temps d'accès et les bandes passantes
+    \item Analyser les performances de la hiérarchie mémoire avec des micro-benchmarks
+    \item Comparer nos résultats avec un outil professionnel (Calibrator)
+\end{itemize}
+
+% IMPORTANT: Déclaration obligatoire sur l'usage des IA
+\textbf{Déclaration concernant l'usage d'IA générative~:} 
+% CHOISIR UNE DES OPTIONS SUIVANTES ET SUPPRIMER L'AUTRE
+
+% Option 1 : Pas d'usage d'IAG
+Aucune IA générative n'a été utilisée dans le cadre de ce projet.
+
+% Option 2 : Usage d'IAG (décommenter et compléter)
+% Une IA générative a été utilisée pour ce projet. Les détails sont fournis
+% dans le fichier \texttt{IAG.txt} inclus dans l'archive.
+
+Le rapport est organisé comme suit~: la section~\ref{sec:env} décrit l'environnement expérimental, la section~\ref{sec:methodo} présente la méthodologie suivie, les sections~\ref{sec:ex1} à~\ref{sec:ex5} détaillent les résultats de chaque exercice, et la section~\ref{sec:conclusion} conclut ce travail.
+
+%==============================================================================
+\section{Environnement Expérimental}
+\label{sec:env}
+%==============================================================================
+
+\subsection{Environnement Matériel}
+
+Les expériences ont été réalisées sur une machine Linux native présentant les caractéristiques suivantes~:
+
+\subsubsection{Processeur}
+
+% À COMPLÉTER avec les informations de votre machine (lscpu)
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Caractéristique} & \textbf{Valeur} \\
+\midrule
+Modèle & Intel Core i7-XXXX / AMD Ryzen X XXXX \\
+Architecture & x86\_64 \\
+Nombre de cœurs physiques & X \\
+Nombre de cœurs logiques & X (avec Hyper-Threading/SMT) \\
+Fréquence de base & X.XX GHz \\
+Fréquence maximale (Turbo) & X.XX GHz \\
+\bottomrule
+\end{tabular}
+\caption{Caractéristiques du processeur}
+\label{tab:cpu}
+\end{table}
+
+\subsubsection{Hiérarchie Mémoire}
+
+% À COMPLÉTER avec les informations de votre machine
+% Commandes utiles : getconf -a | grep CACHE, cat /sys/devices/system/cpu/cpu0/cache/index*/...
+\begin{table}[H]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Niveau} & \textbf{Taille} & \textbf{Ligne cache} & \textbf{Associativité} & \textbf{Type} \\
+\midrule
+L1 Data & XX Ko & XX octets & X-way & par cœur \\
+L1 Instruction & XX Ko & XX octets & X-way & par cœur \\
+L2 & XXX Ko & XX octets & X-way & par cœur \\
+L3 & XX Mo & XX octets & X-way & partagé \\
+\bottomrule
+\end{tabular}
+\caption{Caractéristiques de la hiérarchie de caches}
+\label{tab:cache}
+\end{table}
+
+\subsubsection{Mémoire Centrale et TLB}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Caractéristique} & \textbf{Valeur} \\
+\midrule
+Mémoire RAM totale & XX Go \\
+Type de mémoire & DDR4 / DDR5 \\
+Fréquence mémoire & XXXX MHz \\
+Taille de page & 4096 octets \\
+Entrées TLB (L1 Data) & XX \\
+\bottomrule
+\end{tabular}
+\caption{Caractéristiques de la mémoire}
+\label{tab:mem}
+\end{table}
+
+\subsection{Environnement Logiciel}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Composant} & \textbf{Version} \\
+\midrule
+Distribution Linux & Ubuntu XX.XX / Debian XX / Fedora XX \\
+Version du noyau & X.X.X-XX-generic \\
+Compilateur & gcc X.X.X \\
+Options de compilation & \texttt{-O2 -Wall -march=native} \\
+Outil de mesure du temps & \texttt{clock\_gettime(CLOCK\_MONOTONIC)} \\
+Outil de graphiques & gnuplot X.X \\
+\bottomrule
+\end{tabular}
+\caption{Environnement logiciel}
+\label{tab:soft}
+\end{table}
+
+%==============================================================================
+\section{Méthodologie Expérimentale}
+\label{sec:methodo}
+%==============================================================================
+
+\subsection{Configuration de la Machine}
+
+Afin d'obtenir des mesures reproductibles et précises, plusieurs précautions ont été prises~:
+
+\begin{enumerate}
+    \item \textbf{Réduction de la charge système}~: Les expériences ont été effectuées sur une console TTY, sans interface graphique active, avec un minimum de processus en arrière-plan.
+    
+    \item \textbf{Désactivation du scaling de fréquence}~: Le gouverneur CPU a été configuré en mode \texttt{performance} pour maintenir une fréquence stable~:
+    \begin{lstlisting}[language=bash]
+sudo cpupower frequency-set -g performance
+    \end{lstlisting}
+    
+    \item \textbf{Fixation du CPU d'exécution}~: L'utilitaire \texttt{taskset} a été utilisé pour exécuter les benchmarks sur un cœur spécifique~:
+    \begin{lstlisting}[language=bash]
+taskset -c 0 ./benchmark
+    \end{lstlisting}
+    
+    \item \textbf{Désactivation du Turbo Boost}~: (Si applicable)
+    % Décrire si vous avez pu le désactiver
+\end{enumerate}
+
+\subsection{Protocole de Mesure}
+
+Pour chaque expérience~:
+\begin{itemize}
+    \item Plusieurs répétitions ont été effectuées pour obtenir des mesures stables
+    \item Le temps de précision utilisé est la nanoseconde (\texttt{clock\_gettime})
+    \item Les données sont exportées au format CSV pour analyse avec gnuplot
+\end{itemize}
+
+% Mentionner les difficultés rencontrées si applicable
+\subsection{Difficultés Rencontrées}
+
+% À COMPLÉTER selon votre expérience
+% Exemples : préchargement matériel, variations de fréquence, bruit dans les mesures...
+
+%==============================================================================
+\section{Exercice 1~: Détection des Tailles de Caches}
+\label{sec:ex1}
+%==============================================================================
+
+\subsection{Principe du Micro-benchmark}
+
+L'objectif de cet exercice est de détecter les tailles des différents niveaux de cache en mesurant le temps d'accès moyen à des données en fonction de la taille du \emph{working set}.
+
+Le principe est le suivant~: tant que toutes les données accédées tiennent dans un niveau de cache, le temps d'accès reste constant et rapide. Lorsque la taille des données dépasse la capacité du cache, des défauts de cache se produisent et le temps d'accès augmente brusquement.
+
+\subsection{Implémentation}
+
+Le micro-benchmark effectue les opérations suivantes~:
+\begin{enumerate}
+    \item Allocation d'un tableau de taille variable
+    \item Pré-chargement des données dans le cache
+    \item Mesure du temps d'accès pour différentes tailles de données
+    \item Le pas d'accès correspond à la taille d'une ligne de cache pour accéder à chaque ligne exactement une fois
+\end{enumerate}
+
+\subsection{Résultats}
+
+% INSÉRER VOTRE FIGURE ICI
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.9\textwidth]{../exercice1/cache_latency.pdf}
+\fbox{\parbox{0.8\textwidth}{\centering\vspace{3cm}Figure à insérer\\(cache\_latency.pdf)\vspace{3cm}}}
+\caption{Temps d'accès moyen en fonction de la taille du working set}
+\label{fig:cache}
+\end{figure}
+
+\subsection{Analyse}
+
+% À COMPLÉTER avec votre analyse personnelle
+D'après les résultats obtenus (Figure~\ref{fig:cache}), nous observons~:
+
+\begin{itemize}
+    \item Un premier palier jusqu'à environ XX Ko, correspondant au cache L1
+    \item Un deuxième palier jusqu'à environ XXX Ko, correspondant au cache L2
+    \item Un troisième palier jusqu'à environ XX Mo, correspondant au cache L3
+    \item Au-delà, les accès se font en mémoire principale
+\end{itemize}
+
+% VOTRE ANALYSE PERSONNELLE ICI
+% Qu'avez-vous compris ? Les valeurs correspondent-elles à celles attendues ?
+% Quelles difficultés avez-vous rencontrées ?
+
+%==============================================================================
+\section{Exercice 2~: Bande Passante Mémoire}
+\label{sec:ex2}
+%==============================================================================
+
+\subsection{Principe}
+
+L'objectif est d'évaluer la bande passante entre le processeur et la mémoire centrale, c'est-à-dire le débit de données qui peuvent être transférées par unité de temps.
+
+Pour mesurer la bande passante vers la mémoire principale (et non les caches), il faut s'assurer que les données accédées ne sont pas présentes dans les caches. Cela s'obtient en utilisant un pas d'accès suffisamment grand.
+
+\subsection{Calcul du Pas d'Accès}
+
+Pour contourner les caches et le préchargement matériel, le pas d'accès doit être~:
+\begin{equation}
+    \text{pas} > \text{stride du prefetcher} \times \text{taille ligne cache}
+\end{equation}
+
+En pratique, un pas de l'ordre de la taille d'une page (4~Ko) garantit des accès à des lignes de cache non consécutives.
+
+\subsection{Résultats}
+
+% INSÉRER VOTRE FIGURE ICI
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.9\textwidth]{../exercice2/bandwidth.pdf}
+\fbox{\parbox{0.8\textwidth}{\centering\vspace{3cm}Figure à insérer\\(bandwidth.pdf)\vspace{3cm}}}
+\caption{Bande passante en fonction du pas d'accès}
+\label{fig:bandwidth}
+\end{figure}
+
+\subsection{Analyse}
+
+% À COMPLÉTER avec votre analyse personnelle
+La bande passante mesurée est de l'ordre de XX Go/s pour des accès séquentiels (cache efficace) et diminue à environ XX Go/s pour des accès avec un pas important (mémoire principale).
+
+% VOTRE ANALYSE PERSONNELLE ICI
+
+%==============================================================================
+\section{Exercice 5~: L'outil Calibrator}
+\label{sec:ex5}
+%==============================================================================
+
+\subsection{Présentation de Calibrator}
+
+Calibrator est un outil développé par Stefan Manegold au CWI (Amsterdam) permettant de mesurer automatiquement les caractéristiques de la hiérarchie mémoire~: tailles des caches, tailles des lignes de cache, latences, et caractéristiques du TLB.
+
+\subsection{Pourquoi Calibrator Fonctionne Mieux}
+
+Calibrator utilise plusieurs techniques sophistiquées qui le rendent plus efficace que nos micro-benchmarks simples~:
+
+\subsubsection{Technique du « Pointer Chasing »}
+
+Au lieu d'accéder séquentiellement à un tableau, Calibrator crée une chaîne de pointeurs où chaque élément pointe vers le suivant~:
+
+\begin{lstlisting}[language=C]
+// Approche simple (predictible par le prefetcher)
+for (i = 0; i < n; i += pas) {
+    x += tab[i];
+}
+
+// Approche Calibrator (imprédictible)
+p = (char **)*p;  // Adresse suivante depend de la valeur lue
+\end{lstlisting}
+
+Cette technique désactive efficacement le préchargement matériel car le prefetcher ne peut pas prédire les adresses suivantes.
+
+\subsubsection{Mesure du Temps Minimum}
+
+Calibrator prend le temps \emph{minimum} sur plusieurs essais plutôt qu'une moyenne. Cela élimine les perturbations dues aux interruptions système.
+
+\subsubsection{Calibration Automatique}
+
+Si le temps mesuré est trop court, Calibrator augmente automatiquement le nombre d'itérations pour obtenir des mesures significatives.
+
+\subsection{Résultats de Calibrator}
+
+% INSÉRER VOS FIGURES ICI
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.9\textwidth]{../exercice5/results.cache-miss-latency.pdf}
+\fbox{\parbox{0.8\textwidth}{\centering\vspace{3cm}Figure à insérer\\(cache-miss-latency)\vspace{3cm}}}
+\caption{Latence de défaut de cache mesurée par Calibrator}
+\label{fig:calibrator-cache}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.9\textwidth]{../exercice5/results.TLB-miss-latency.pdf}
+\fbox{\parbox{0.8\textwidth}{\centering\vspace{3cm}Figure à insérer\\(TLB-miss-latency)\vspace{3cm}}}
+\caption{Latence de défaut de TLB mesurée par Calibrator}
+\label{fig:calibrator-tlb}
+\end{figure}
+
+\subsection{Analyse Comparative}
+
+% À COMPLÉTER avec votre analyse personnelle
+En comparant les résultats de Calibrator avec ceux de nos micro-benchmarks~:
+
+\begin{itemize}
+    \item Les courbes de Calibrator montrent des paliers plus nets
+    \item Les valeurs mesurées sont plus précises grâce à la technique du pointer chasing
+    \item % Ajoutez vos observations personnelles
+\end{itemize}
+
+%==============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%==============================================================================
+
+% LA CONCLUSION EST LA SECTION LA PLUS IMPORTANTE
+% Ne pas la rédiger à la hâte !
+
+Ce projet m'a permis de comprendre en profondeur le fonctionnement de la hiérarchie mémoire d'un processeur moderne. Les principales leçons apprises sont~:
+
+\begin{enumerate}
+    \item \textbf{Importance des caches}~: % Votre message personnel
+    
+    \item \textbf{Difficultés de mesure}~: % Ce que vous avez compris sur les difficultés
+    
+    \item \textbf{Techniques avancées}~: % Ce que Calibrator vous a appris
+\end{enumerate}
+
+% VOTRE OPINION PERSONNELLE ET RÉFLÉCHIE
+% Qu'est-ce que ce projet vous a apporté ?
+% Quelles perspectives voyez-vous ?
+
+Les perspectives de ce travail incluent~:
+\begin{itemize}
+    \item % Perspectives possibles
+\end{itemize}
+
+%==============================================================================
+% Bibliographie
+%==============================================================================
+\begin{thebibliography}{9}
+
+\bibitem{calibrator}
+Stefan Manegold,
+\emph{Calibrator: A Cache-Memory and TLB Calibration Tool},
+CWI Amsterdam,
+\url{http://homepages.cwi.nl/~manegold/Calibrator/}
+
+\bibitem{cours}
+Pr Sid Touati,
+\emph{Cours d'Architecture des Processeurs Hautes Performances},
+Université Côte d'Azur, 2024-2025.
+
+% Ajoutez d'autres références si nécessaire
+
+\end{thebibliography}
+
+\end{document}

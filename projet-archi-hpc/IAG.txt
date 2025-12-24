@@ -1,0 +1,31 @@
+# Déclaration d'usage d'IA Générative
+# Projet Architecture des Processeurs Hautes Performances
+# =========================================================
+
+Nom: [VOTRE NOM]
+Prénom: [VOTRE PRÉNOM]
+
+# Informations sur l'IAG utilisée
+Nom de l'IAG: Claude
+Version: Claude Opus 4.5
+Niveau d'accès: [gratuit / pro / premium]
+
+# Contexte d'usage
+# Décrivez dans quelle partie du projet vous avez utilisé l'IAG
+
+Partie(s) du projet concernée(s):
+- Mise en place de l'environnement de travail et structure du projet
+- Création des templates de code pour les micro-benchmarks
+- Création du template LaTeX pour le rapport
+- Compréhension de l'outil Calibrator
+
+# Historique des prompts
+# Listez ci-dessous les requêtes que vous avez soumises à l'IAG
+# (Ne pas inclure les réponses de l'IAG)
+
+## Prompt 1
+[Date: VOTRE_DATE]
+"voila mon projet, le truc de calibrator je ne le comprend pas; je suis sous ubuntu le prof a demandé debian ou fedora mais a mon avis ca ne changera rien; je veux que on commance par la creation d'un bon environement de travail sachant que j'ai deja gcc, donc on passera a la creation d'un repo github"
+
+## Prompt 2
+[Ajoutez vos autres prompts ici]
