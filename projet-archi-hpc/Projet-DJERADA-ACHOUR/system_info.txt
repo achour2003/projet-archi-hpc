@@ -1,0 +1,192 @@
+=== Collecte des informations système ===
+Date: lun. 29 déc. 2025 19:42:37 CET
+
+=============================================
+1. INFORMATIONS GÉNÉRALES
+=============================================
+
+Hostname: achour-Legion-5-15IRX10
+Kernel: 6.14.0-37-generic
+Architecture: x86_64
+
+Distribution:
+NAME="Ubuntu"
+VERSION="24.04.3 LTS (Noble Numbat)"
+
+=============================================
+2. INFORMATIONS CPU (lscpu)
+=============================================
+
+Architecture :                           x86_64
+Mode(s) opératoire(s) des processeurs :  32-bit, 64-bit
+Address sizes:                           39 bits physical, 48 bits virtual
+Boutisme :                               Little Endian
+Processeur(s) :                          20
+Liste de processeur(s) en ligne :        0-19
+Identifiant constructeur :               GenuineIntel
+BIOS Vendor ID:                          Intel(R) Corporation
+Nom de modèle :                          13th Gen Intel(R) Core(TM) i7-13650HX
+BIOS Model name:                         13th Gen Intel(R) Core(TM) i7-13650HX To Be Filled By O.E.M. CPU @ 4.4GHz
+BIOS CPU family:                         198
+Famille de processeur :                  6
+Modèle :                                 183
+Thread(s) par cœur :                     2
+Cœur(s) par socket :                     14
+Socket(s) :                              1
+Révision :                               1
+CPU(s) scaling MHz:                      56%
+Vitesse maximale du processeur en MHz :  4900,0000
+Vitesse minimale du processeur en MHz :  800,0000
+BogoMIPS :                               5606,40
+Drapaux :                                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves split_lock_detect user_shstk avx_vnni dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp hwp_pkg_req hfi vnmi umip pku ospke waitpkg gfni vaes vpclmulqdq rdpid movdiri movdir64b fsrm md_clear serialize arch_lbr ibt flush_l1d arch_capabilities
+Virtualisation :                         VT-x
+Cache L1d :                              544 KiB (14 instances)
+Cache L1i :                              704 KiB (14 instances)
+Cache L2 :                               11,5 MiB (8 instances)
+Cache L3 :                               24 MiB (1 instance)
+Nœud(s) NUMA :                           1
+Nœud NUMA 0 de processeur(s) :           0-19
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Mitigation; Clear Register File
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Not affected
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+=============================================
+3. HIÉRARCHIE DES CACHES
+=============================================
+
+--- Via getconf ---
+LEVEL1_ICACHE_SIZE                 65536
+LEVEL1_ICACHE_ASSOC                
+LEVEL1_ICACHE_LINESIZE             64
+LEVEL1_DCACHE_SIZE                 32768
+LEVEL1_DCACHE_ASSOC                8
+LEVEL1_DCACHE_LINESIZE             64
+LEVEL2_CACHE_SIZE                  2097152
+LEVEL2_CACHE_ASSOC                 16
+LEVEL2_CACHE_LINESIZE              64
+LEVEL3_CACHE_SIZE                  25165824
+LEVEL3_CACHE_ASSOC                 12
+LEVEL3_CACHE_LINESIZE              64
+LEVEL4_CACHE_SIZE                  
+LEVEL4_CACHE_ASSOC                 
+LEVEL4_CACHE_LINESIZE              
+
+--- Via sysfs ---
+index0:
+  Level: 1
+  Type: Data
+  Size: 48K
+  Line size: 64 bytes
+  Associativity: 12-way
+  Sets: 64
+
+index1:
+  Level: 1
+  Type: Instruction
+  Size: 32K
+  Line size: 64 bytes
+  Associativity: 8-way
+  Sets: 64
+
+index2:
+  Level: 2
+  Type: Unified
+  Size: 1280K
+  Line size: 64 bytes
+  Associativity: 10-way
+  Sets: 2048
+
+index3:
+  Level: 3
+  Type: Unified
+  Size: 24576K
+  Line size: 64 bytes
+  Associativity: 12-way
+  Sets: 32768
+
+=============================================
+4. MÉMOIRE
+=============================================
+
+--- free -h ---
+               total       utilisé      libre     partagé tamp/cache   disponible
+Mem:            31Gi       5,3Gi        21Gi       1,1Gi       4,9Gi        25Gi
+Échange:       8,0Gi          0B       8,0Gi
+
+--- Taille de page ---
+Page size: 4096 bytes
+
+--- /proc/meminfo (extrait) ---
+MemTotal:       32580908 kB
+MemFree:        22676724 kB
+MemAvailable:   26974808 kB
+Buffers:          147600 kB
+Cached:          4702796 kB
+SwapCached:            0 kB
+SwapTotal:       8388604 kB
+
+=============================================
+5. FRÉQUENCES CPU
+=============================================
+
+--- Fréquences actuelles ---
+cpu MHz		: 1163.072
+cpu MHz		: 873.761
+cpu MHz		: 4600.716
+cpu MHz		: 4064.957
+
+--- Gouverneur CPU ---
+cpufreq: powersave
+cpufreq: powersave
+cpufreq: powersave
+cpufreq: powersave
+
+Min freq: 800000 kHz
+Max freq: 4700000 kHz
+
+=============================================
+6. COMPILATEUR
+=============================================
+
+gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+
+=============================================
+7. OUTILS DISPONIBLES
+=============================================
+
+gnuplot: disponible (/usr/bin/gnuplot)
+pdflatex: disponible (/usr/bin/pdflatex)
+perf: disponible (/usr/bin/perf)
+cpupower: disponible (/usr/bin/cpupower)
+taskset: disponible (/usr/bin/taskset)
+
+=============================================
+8. RÉSUMÉ POUR LE RAPPORT LATEX
+=============================================
+
+Copiez-collez ces valeurs dans votre rapport :
+
+Modèle CPU: 13th Gen Intel(R) Core(TM) i7-13650HX To Be Filled By O.E.M. CPU @ 4.4GHz
+Cœurs physiques: 0
+Cœurs logiques: 
+Cache L1 (Data): 48K, ligne 64 octets, 12-way
+Cache L1 (Instruction): 32K, ligne 64 octets, 8-way
+Cache L2 (Unified): 1280K, ligne 64 octets, 10-way
+Cache L3 (Unified): 24576K, ligne 64 octets, 12-way
+
+Fichier généré: system_info.txt

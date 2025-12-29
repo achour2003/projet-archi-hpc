@@ -1,0 +1,315 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+  <!-- Stefan Manegold, 01.03.2000 -->
+  <title> The Calibrator (v0.9e), a Cache-Memory and TLB Calibration Tool </title>
+ </head>
+ <!-- <BODY BACKGROUND=http://www.cwi.nl/~manegold/images/CWI.gif> -->
+
+<body><h1>The Calibrator (v0.9e), a Cache-Memory and TLB Calibration Tool</h1>
+
+<hr>
+
+<h3>
+<ol> <li> <a href="#1">Introduction</a>
+</li><li> <a href="#2">The Source Code and how to compile it</a>
+</li><li> <a href="#3">Binary Executables</a>
+</li><li> <a href="#4">How to use The Calibrator</a>
+</li><li> <a href="#5">Sample Output</a>
+</li><li> <a href="#6">The Calibrated Hardware Database</a>
+</li><li> <a href="#7">Request for Contributions and Feedback</a>
+</li>
+</ol></h3>
+
+<hr>
+
+<h3><a name="1"> 1. Introduction</a></h3>
+
+The Calibrator is a small C program that is supposed to analyze a computers
+(cache-) memory system and extract the following parameters:
+
+<ul> <li> number of cache levels
+</li><li> for each cache level:
+</li><ul> <li> its size
+     </li><li> its linesize
+     </li><li> its access/miss latency
+     </li></ul>
+     <li> main memory access latency
+</li><li> number of TLB levels
+</li><li> for each TLB level:
+</li><ul> <li> its capacity (i.e. number of entries)
+     </li><li> the pagesize used
+     </li><li> the TLB miss latency
+</li></ul></ul>
+
+A short description of the Calibrator is available as <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/doc/calibrator.pdf">PDF</a> or <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/doc/calibrator.ps">PostScript</a>
+document.
+
+<p>
+
+The Calibrator is a by-product of our work on 
+<a href="http://www.cwi.nl/htbin/ins1/publications?request=search&amp;field=KEYWORDS&amp;pattern=Calibrator&amp;title=Keyword:+Calibrator">Main-Memory Databases</a>
+within the <a href="http://monetdb.cwi.nl/">MonetDB</a> project.
+
+</p><p>
+
+The Calibrator is freely available for download and usage, but we kindly ask all
+users to include a reference to the Calibrator's home page
+(<a href="http://www.cwi.nl/%7Emanegold/Calibrator/">http://www.cwi.nl/~manegold/Calibrator/</a>)
+whenever they refer to the Calibrator or publish calibration results.
+
+<!--
+
+<HR>
+
+<FONT SIZE="+2">
+<EM>
+
+<U><B>Update:</B></U>
+
+The latest version of the Calibrator (v0.9e) is available 
+<A HREF="v0.9e"><B>here</B></A>.
+
+</EM>
+</FONT>
+
+-->
+
+</p><hr>
+
+<h3><a name="2"> 2. The Source Code and how to compile it</a></h3>
+
+To compile the Calibrator on a <b>UNIX</b>-System, just run
+
+<br><tt>&nbsp; [Cc] <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/src/calibrator.c">calibrator.c</a> -o calibrator -lm </tt><br>
+
+where<tt> [Cc] </tt>is your favorite C compiler.
+
+<p>
+
+To compile the Calibrator on a <b>Windows</b>-System ('95, '98, 2000, NT), 
+
+</p><ul> <li> get the latest (&gt;=1.0)
+          <a href="http://www.redhat.com/software/cygwin/">cygwin</a> binary
+          distribution from
+          <a href="http://sources.redhat.com/cygwin/">here</a>
+</li><li> open a cygnus window, cd to the Calibrator directory
+</li><li> compile with:
+          <br><tt>&nbsp; gcc -mno-cygwin -DWIN32 <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/src/calibrator.c">calibrator.c</a> -o calibrator.exe -lwinmm </tt>
+</li></ul>
+
+<hr>
+
+<h3><a name="3"> 3. Binary Executables</a></h3>
+
+Binary executables of the Calibrator are currently available for the
+following platforms:
+
+<!--
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=2>
+<TR ALIGN=left><TD> <A HREF="bin/calibrator.AIX4.2"         >AIX4.2</A>         </TD><TD ALIGN=right>  83 KB </TD><TD> executable (RISC System/6000 V3.1) or obj module not stripped </TD></TR>
+<TR ALIGN=left><TD> <A HREF="bin/calibrator.IRIX6.2"        >IRIX6.2</A>        </TD><TD ALIGN=right>  53 KB </TD><TD> ELF 32-bit N32 MSB mips-3 executable, MIPS R3000_BE, version 1, dynamically linked (uses shared libs), stripped </TD></TR>
+<TR ALIGN=left><TD> <A HREF="bin/calibrator.IRIX646.5"      >IRIX646.5</A>      </TD><TD ALIGN=right>  53 KB </TD><TD> ELF 32-bit N32 MSB mips-4 executable, MIPS R3000_BE, version 1, dynamically linked (uses shared libs), stripped </TD></TR>
+<TR ALIGN=left><TD> <A HREF="bin/calibrator.Linux2.2.12-20" >Linux2.2.12-20</A> </TD><TD ALIGN=right>  55 KB </TD><TD> ELF 32-bit LSB executable, Intel 80386, version 1, dynamically linked (uses shared libs), not stripped </TD></TR>
+<TR ALIGN=left><TD> <A HREF="bin/calibrator.OSF1V4.0"       >OSF1V4.0</A>       </TD><TD ALIGN=right>  65 KB </TD><TD> COFF format alpha executable paged dynamically linked not stripped - version 3.11-10 </TD></TR>
+<TR ALIGN=left><TD> <A HREF="bin/calibrator.SunOS5.5.1"     >SunOS5.5.1</A>     </TD><TD ALIGN=right>  65 KB </TD><TD> ELF 32-bit MSB executable, SPARC, version 1, dynamically linked (uses shared libs), not stripped </TD></TR>
+<TR ALIGN=left><TD> <A HREF="bin/calibrator.SunOS5.6"       >SunOS5.6</A>       </TD><TD ALIGN=right> 101 KB </TD><TD> ELF 32-bit MSB executable, SPARC, version 1, dynamically linked (uses shared libs), not stripped </TD></TR>
+<TR ALIGN=left><TD> <A HREF="bin/calibrator.WIN32.exe"      >WIN32</A>          </TD><TD ALIGN=right>  19 KB </TD><TD> calibrator.WIN32.exe: MS Windows PE 32-bit Intel 80386 console executable not relocatable </TD></TR>
+</TABLE>
+-->
+
+<table border="1" cellpadding="2" cellspacing="0">
+<tbody><tr align="left"><td> <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/bin/calibrator-AIX">AIX</a>          </td><td align="right"> 103 KB </td><td> executable (RISC System/6000 V3.1) or obj module not stripped </td></tr>
+<tr align="left"><td> <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/bin/calibrator-IRIX">IRIX</a>         </td><td align="right">  62 KB </td><td> ELF 32-bit MSB mips-1 executable, MIPS R3000_BE, version 1, dynamically linked (uses shared libs), not stripped </td></tr>
+<tr align="left"><td> <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/bin/calibrator-IRIX64">IRIX64</a>       </td><td align="right">  57 KB </td><td> ELF 32-bit N32 MSB mips-4 executable, MIPS R3000_BE, version 1, dynamically linked (uses shared libs), stripped </td></tr>
+<tr align="left"><td> <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/bin/calibrator-Linux-i386">Linux (i386)</a> </td><td align="right">  38 KB </td><td> ELF 32-bit LSB executable, Intel 80386, version 1, dynamically linked (uses shared libs), not stripped </td></tr>
+<tr align="left"><td> <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/bin/calibrator-OSF1">OSF1</a>         </td><td align="right">  65 KB </td><td> COFF format alpha executable paged dynamically linked not stripped - version 3.11-10 </td></tr>
+<tr align="left"><td> <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/bin/calibrator-SunOS">SunOS</a>        </td><td align="right">  60 KB </td><td> ELF 32-bit MSB executable, SPARC, version 1, dynamically linked (uses shared libs), not stripped </td></tr>
+<tr align="left"><td> <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/bin/calibrator-Win32.exe">Win32</a>        </td><td align="right">  48 KB </td><td> MS Windows PE 32-bit Intel 80386 console executable not relocatable </td></tr>
+</tbody></table>
+
+<hr>
+
+<h3><a name="4"> 4. How to use The Calibrator</a></h3>
+
+To run the Calibrator, you need to give three parameters, i.e., <br>
+
+<br><tt>&nbsp; calibrator [MHz] [size] [filename] </tt>
+
+<dl><dt><tt>[MHz]</tt></dt><dd>
+	gives the CPU's clock speed in Mega Hertz (MHz).
+</dd><dt><tt>[size]</tt></dt><dd>
+	gives the amount of memory to be used.<tt> [size] </tt>should be
+	smaller than the total amount of main memory, but it should be
+	significantly bigger than the maximum cache size expected. 
+	<br><tt>[size] </tt>is interpreted as bytes; suffixes "k" ("kilo" =
+	1024), "M" ("Mega" = 1024<sup>2</sup>), and "G" ("Giga" =
+	1024<sup>3</sup>) may be used.
+</dd><dt><tt>[filename]</tt></dt><dd>
+	gives the filename for the result files.
+</dd></dl>
+
+<hr>
+
+<h3><a name="5"> 5. Sample Output</a></h3>
+
+The Calibrator creates output like (AMD Athlon "Thunderbird" 1 GHz in an ASUS A7V):
+
+<pre>Calibrator v0.9e
+(by Stefan.Manegold@cwi.nl, http://www.cwi.nl/~manegold/)
+
+CPU loop + L1 access:       3.00 ns =   3 cy
+             ( delay:     100.17 ns = 100 cy )
+
+caches:
+level  size    linesize   miss-latency        replace-time
+  1     64 KB   64 bytes    8.42 ns =   8 cy   17.11 ns =  17 cy
+  2    320 KB   64 bytes  155.75 ns = 156 cy  146.38 ns = 146 cy
+
+TLBs:
+level #entries  pagesize  miss-latency
+  1       24       4 KB     5.14 ns =   5 cy 
+  2      320       4 KB    25.06 ns =  25 cy 
+</pre>
+
+The "replace-time" is the penalty for a cache-miss on a busy bus, i.e., when
+each miss is immediately followed by the next one. The "miss-latency" is the
+penalty for a cache-miss on an idle bus, i.e., when there is a delay of
+~100 cycles between two subsequent cache misses without any other bus
+traffic. On a PentiumIII and on the first Athlons, both values are equal. On
+the Thunderbird, for an L1 miss, "replace-time" it about twice as high as
+"miss-latency", probably due to the extended traffic caused by the exclusive
+L2 cache.
+
+<p>
+
+The main memory access latency is then just the sum of the miss-latencies of
+all cache levels.
+
+</p><hr>
+
+Additionally, the Calibrator creates six files:
+
+<dl><dt><tt>
+<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/cache-replace-time.data">[filename].cache-replace-time.data</a>,<br>
+<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/cache-miss-latency.data">[filename].cache-miss-latency.data</a>,<br>
+<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/TLB-miss-latency.data">[filename].TLB-miss-latency.data</a></tt>:</dt><dd>
+	the results of the analysis for the cache system and the TLB,
+	respectively.
+</dd><dt><br><tt>
+<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/cache-replace-time.gp">[filename].cache-replace-time.gp</a>,<br>
+<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/cache-miss-latency.gp">[filename].cache-miss-latency.gp</a>,<br>
+<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/TLB-miss-latency.gp">[filename].TLB-miss-latency.gp</a></tt>:</dt><dd>
+	gnuplot scripts to visualize the results.
+
+	<p>
+
+	Running <br><tt>
+		&nbsp;gnuplot [filename].cache-replace-time.gp<br>
+		&nbsp;gnuplot [filename].cache-miss-latency.gp<br>
+		&nbsp;gnuplot [filename].TLB-miss-latency.gp</tt><br>
+	creates the respective files with the plots. By default, these
+	gnuplot scripts generate PostScript files <br><tt>
+		&nbsp;<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/cache-replace-time.ps">[filename].cache-replace-time.ps</a><br>
+		&nbsp;<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/cache-miss-latency.ps">[filename].cache-miss-latency.ps</a><br>
+		&nbsp;<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/TLB-miss-latency.ps">[filename].TLB-miss-latency.ps</a></tt>.<br>
+	By commenting-out the terminal settings for PostScript and
+	un-commenting those for GIF in the<tt> .gp </tt>files, GIF files
+	<br><tt>
+		&nbsp;<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/cache-replace-time.gif">[filename].cache-replace-time.gif</a><br>
+		&nbsp;<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/cache-miss-latency.gif">[filename].cache-miss-latency.gif</a><br>
+		&nbsp;<a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000.results/TLB-miss-latency.gif">[filename].TLB-miss-latency.gif</a></tt><br>
+	can be created instead.
+
+	</p><p>
+
+	For Win32 users, there is
+	<a href="ftp://ftp.dartmouth.edu/pub/gnuplot/gp37mgw.zip">gnuplot for windows</a>.
+	
+	<br>Mode of operation:
+	
+	<br>Unzip the file, and put the directory where
+	the<tt> wgnuplot.exe </tt>file is in your PATH.
+	
+	<br>To view the plots you produced with the Calibrator interactively,
+	rather than produce postscript output, uncomment the first two lines
+	the<tt> .gp </tt>files:
+	
+	<br><tt>&nbsp; </tt>edit<tt> MYMACHINE.cache-replace-time.gp </tt>:
+	<br><tt>&nbsp; </tt>place<tt> # </tt>in front of:<tt> set term ...</tt>
+	<br><tt>&nbsp; </tt>place<tt> # </tt>in front of:<tt> set output ...</tt>
+	
+	<br>(similarly for<tt> MYMACHINE.cache-miss-latency.gp </tt>and<tt> MYMACHINE.TLB-miss-latency.gp </tt>).
+	
+	<br>Then you can invoke gnuplot:
+	
+	<br><tt>&nbsp; c:&gt; wgnuplot</tt>
+	
+	<br>Inside the gnuplot prompt, you go to the directory where your
+	calibortor files are:
+	
+	<br><tt>&nbsp; gnuplot&gt; cd "c:\calibrator"</tt>
+	
+	<br>(note the double quotes).
+	
+	<br>Then load the command file to produce the plots:
+	
+	<br><tt>&nbsp; gnuplot&gt; load "MYMACHINE.cache-replace-time.gp"</tt>
+</p></dd></dl>
+
+<hr>
+
+<h3><a name="6"> 6. The Calibrated Hardware Database</a></h3>
+
+The <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/DB/DB.shtml">Calibrated Hardware Database</a> already contains
+the Calibrator results for more than 50 different machines.
+<br>(Thanks to Carsten Franke, Peter Boncz, and Brian Neil.)
+
+<p>
+
+Thanks to <a href="mailto:Kai_Schmerer@zdnet.com">Kai Schmerer</a> of <a href="http://www.zdnet.de/">ZDNet.de</a> for providing me with some first result for
+a <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Pentium_4-1500-Rambus.results/"><b><em>Pentium 4/1500 with Rambus</em></b></a>
+as well as for an <a href="http://homepages.cwi.nl/%7Emanegold/Calibrator/v0.9e/Thunderbird-1000-DDR.results/"><em><b>Athlon/1000
+with DDR-SDRAM</b></em></a>.
+
+</p><hr>
+
+<h3><a name="7"> 7. Request for Contributions and Feedback</a></h3>
+
+If anybody reading this has (access to) a machine with <b>Rambus</b>-memory
+or <b>DDR-SDRAM</b>, I'd be very pleased, if he/she could run the Calibrator
+on that machine and send me the results. I'm very curious, whether the
+memory-access-latency (i.e., L1-miss-latency + L2-miss-latency) is
+(significantly) less than that of PC100/PC133-memory based systems (~140ns)
+or even less than the "fastest" system I ever tested: a PowerMAC G4 with
+just ~100ns (see http://www.cwi.nl/~manegold/Calibrator/DB/ for an overview
+of machines that I've already tested).
+
+<p>
+
+Of course, the same holds for anyone having (access to) a <b>Pentium 4</b>.
+I'd really like to know how the Pentium 4's caches compare to those of a
+PentiumIII or Athlon...
+
+</p><hr>
+
+Please feel free to use the Calibrator and to report any kind of feed back
+(e.g., results, problems, hints, critiques, suggestions, ...) to
+
+<p>
+<a href="http://www.cwi.nl/%7Emanegold/">Stefan Manegold</a>
+(<a href="mailto:Stefan.Manegold@cwi.nl">Stefan.Manegold@cwi.nl</a>)
+</p><p>
+
+</p><hr>
+
+  <!-- #include virtual="/~manegold/.signature.shtml" -->
+<address>
+<!-- #echo var="LAST_MODIFIED" -->Thu Jun 24 19:48:00 2004,
+<a href="http://www.cwi.nl/%7Emanegold/">Stefan Manegold</a>,
+<a href="mailto:Stefan.Manegold@cwi.nl">Stefan.Manegold@cwi.nl</a>
+<br>
+(<a href="http://www.cwi.nl/disclaimer.html">CWI's disclaimer</a>)
+</address>
+ 
+
+</body></html>

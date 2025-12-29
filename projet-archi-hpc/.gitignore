@@ -9,43 +9,15 @@ calibrator
 *.aux
 *.log
 *.toc
-*.lof
-*.lot
+*.out
+*.synctex.gz
 *.fls
 *.fdb_latexmk
-*.synctex.gz
-*.bbl
-*.blg
-*.nav
-*.snm
-*.vrb
-
-# Fichiers de données (à décommenter si vous voulez les inclure)
-# *.csv
-# *.data
-
-# Fichiers générés par gnuplot
-# *.ps
-
-# Archives
-*.tar.gz
-*.zip
 
 # Fichiers système
 .DS_Store
-Thumbs.db
-*~
 *.swp
-*.swo
+*~
 
-# Fichiers de backup
-*.bak
-*.backup
-
-# Dossiers IDE
-.vscode/
-.idea/
-
-# Fichiers temporaires
-tmp/
-temp/
+# Archives (on les régénère)
+*.tar.gz

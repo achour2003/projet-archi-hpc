@@ -1,0 +1,622 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% \usepackage[french]{babel} % Décommentez si texlive-lang-french est installé
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+
+% Configuration des marges
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% Configuration des hyperliens
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+    citecolor=black
+}
+
+% Configuration pour le code C
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% ============================================================
+% PAGE DE TITRE
+% ============================================================
+\title{
+    \vspace{2cm}
+    \textbf{\LARGE Rapport de Projet}\\
+    \vspace{0.5cm}
+    \textbf{\Large Architecture des Processeurs Hautes Performances}\\
+    \vspace{1cm}
+    \large Analyse expérimentale de la hiérarchie mémoire\\
+    Architecture Intel Raptor Lake (i7-13650HX)
+    \vspace{2cm}
+}
+
+\author{
+    \textbf{Auteur :} Achour Djerada \\
+    \textbf{Master 1 Informatique} \\
+    Année universitaire 2024/2025
+}
+
+\date{
+    \vspace{3cm}
+    \textbf{Encadrant :} Pr.~Sid Touati\\
+    Université Côte d'Azur\\
+    \vspace{1cm}
+    \today
+}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+% ============================================================
+% RÉSUMÉ
+% ============================================================
+\begin{abstract}
+Ce rapport présente une étude expérimentale approfondie de la hiérarchie mémoire d'un processeur Intel Core i7-13650HX (architecture Raptor Lake). À travers le développement de micro-benchmarks en langage C et l'utilisation de l'outil Calibrator, nous avons mesuré les latences d'accès et les bandes passantes des différents niveaux de cache (L1, L2, L3) ainsi que de la mémoire DDR5. 
+
+Notre contribution principale réside dans l'implémentation de la technique du \textit{Pointer Chasing} avec randomisation Fisher-Yates, permettant de contourner les mécanismes de préchargement matériel (\textit{Hardware Prefetcher}) qui masquent les latences réelles. Les résultats expérimentaux confirment les spécifications théoriques du processeur : cache L1 de 48~Ko ($\approx$1,1~ns), cache L2 de 1,25~Mo ($\approx$3,2~ns), cache L3 de 24~Mo ($\approx$15-20~ns), et RAM DDR5 ($\approx$71~ns). Cette étude démontre l'importance cruciale de la \textit{Memory Awareness} dans le développement d'applications hautes performances.
+
+\textbf{Mots-clés :} Hiérarchie mémoire, Cache, Latence, Bande passante, Pointer Chasing, Prefetcher, TLB, Micro-benchmark.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================================
+% INTRODUCTION
+% ============================================================
+\section{Introduction}
+
+L'évaluation de performance (\textit{benchmarking}) sur les architectures modernes est devenue un défi complexe. Contrairement aux processeurs des décennies précédentes, les puces actuelles, comme l'\textbf{Intel Core i7-13650HX} (architecture Raptor Lake) utilisé pour ce projet, intègrent des mécanismes d'optimisation agressifs conçus pour masquer la latence mémoire à l'utilisateur.
+
+Le fossé grandissant entre la vitesse des processeurs et celle de la mémoire centrale --- communément appelé \textit{Memory Wall} --- a conduit les concepteurs de processeurs à développer des hiérarchies de caches de plus en plus sophistiquées. Comprendre et mesurer les caractéristiques de ces hiérarchies est essentiel pour tout développeur souhaitant optimiser ses applications dans un contexte HPC (\textit{High Performance Computing}).
+
+Ce projet a pour objectif de « piéger » les mécanismes d'optimisation matériels pour mesurer les caractéristiques physiques réelles de la hiérarchie mémoire : caches L1, L2, L3 et RAM DDR5. Nous avons développé des micro-benchmarks capables de révéler ces caractéristiques en contournant notamment le \textit{Hardware Prefetcher} du processeur.
+
+Nous verrons au cours de ce rapport que la réalisation de ces mesures ne s'est pas faite sans heurts. Nos premières tentatives ont abouti à des résultats incohérents, masqués par les optimisations matérielles. Nous détaillerons la démarche scientifique qui nous a permis de contourner ces optimisations, notamment l'implémentation du \textit{Pointer Chasing} aléatoire avec l'algorithme de Fisher-Yates.
+
+\subsection{Déclaration d'usage d'IA générative}
+
+Dans le cadre de ce projet, j'ai utilisé une intelligence artificielle générative (Claude, Anthropic) pour m'aider à améliorer la structure et le contenu de ce rapport, ainsi que pour corriger certaines erreurs dans mes codes. L'historique des prompts est fourni dans le fichier \texttt{IAG.txt} joint à l'archive.
+
+\newpage
+
+% ============================================================
+% ENVIRONNEMENT EXPÉRIMENTAL
+% ============================================================
+\section{Description de l'environnement expérimental}
+
+Cette section décrit en détail l'environnement matériel et logiciel utilisé pour nos expériences, conformément aux exigences de reproductibilité scientifique.
+
+\subsection{Environnement matériel}
+
+Les expériences ont été réalisées sur un ordinateur portable équipé d'un processeur Intel de 13\up{ème} génération. Le tableau~\ref{tab:config_materielle} résume les caractéristiques principales.
+
+\begin{table}[H]
+\centering
+\caption{Configuration matérielle de la machine de test}
+\label{tab:config_materielle}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Composant} & \textbf{Spécification} \\
+\midrule
+Processeur & Intel Core i7-13650HX \\
+Architecture & Raptor Lake (x86\_64) \\
+Nombre de cœurs & 14 (6 P-cores + 8 E-cores) \\
+Nombre de threads & 20 \\
+Fréquence de base (P-cores) & 2,6 GHz \\
+Fréquence Turbo max & 4,9 GHz \\
+Mémoire RAM & 32 Go DDR5-4800 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Hiérarchie mémoire détaillée}
+
+Le tableau~\ref{tab:hierarchie_cache} présente les caractéristiques détaillées de la hiérarchie de cache, obtenues via les commandes \texttt{lscpu} et \texttt{getconf}.
+
+\begin{table}[H]
+\centering
+\caption{Caractéristiques de la hiérarchie de cache (i7-13650HX)}
+\label{tab:hierarchie_cache}
+\begin{tabular}{@{}lcccl@{}}
+\toprule
+\textbf{Niveau} & \textbf{Taille} & \textbf{Ligne cache} & \textbf{Associativité} & \textbf{Type} \\
+\midrule
+L1 Data (P-core) & 48 Ko & 64 octets & 12-way & Privé par cœur \\
+L1 Instruction & 32 Ko & 64 octets & 8-way & Privé par cœur \\
+L2 (P-core) & 1,25 Mo & 64 octets & 10-way & Privé par cœur \\
+L3 (Smart Cache) & 24 Mo & 64 octets & 12-way & Partagé \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Caractéristiques du pipeline et parallélisme d'instructions}
+
+Le processeur i7-13650HX utilise une architecture hybride avec deux types de cœurs :
+
+\begin{itemize}
+    \item \textbf{P-cores (Performance)} : Architecture Golden Cove, pipeline profond ($\approx$20 étages), exécution \textit{out-of-order} avec jusqu'à 6 instructions par cycle, support de l'Hyper-Threading.
+    \item \textbf{E-cores (Efficient)} : Architecture Gracemont, pipeline plus court ($\approx$13 étages), optimisés pour l'efficacité énergétique, pas d'Hyper-Threading.
+\end{itemize}
+
+Le processeur dispose également d'un \textit{Hardware Prefetcher} avancé capable de détecter et précharger les motifs d'accès linéaires et à pas fixe (\textit{stride}).
+
+\subsection{Environnement logiciel}
+
+\begin{table}[H]
+\centering
+\caption{Configuration logicielle}
+\label{tab:config_logicielle}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Composant} & \textbf{Version} \\
+\midrule
+Système d'exploitation & Ubuntu 24.04 LTS \\
+Noyau Linux & 6.8.0-generic \\
+Compilateur & GCC 13.2.0 \\
+Outil de graphiques & Gnuplot 5.4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Options de compilation}
+
+Les micro-benchmarks ont été compilés avec les options suivantes :
+\begin{verbatim}
+gcc -O2 -Wall -Wextra -o benchmark benchmark.c
+\end{verbatim}
+
+Le niveau d'optimisation \texttt{-O2} a été choisi pour permettre des optimisations raisonnables sans que le compilateur ne supprime les boucles de mesure (ce qui peut arriver avec \texttt{-O3}).
+
+\subsubsection{Outil de mesure du temps}
+
+Nous avons utilisé la fonction \texttt{clock\_gettime()} avec l'horloge \texttt{CLOCK\_MONOTONIC} pour obtenir une précision à la nanoseconde :
+
+\begin{lstlisting}[language=C, caption=Fonction de mesure du temps]
+static inline uint64_t get_time_ns(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000000000ULL + 
+           (uint64_t)ts.tv_nsec;
+}
+\end{lstlisting}
+
+\subsection{Configuration de la machine pendant les expériences}
+
+Pour garantir la fiabilité des mesures, nous avons suivi un protocole strict :
+
+\begin{enumerate}
+    \item \textbf{Réduction de la charge système :} Fermeture de l'interface graphique (passage en mode console via \texttt{Ctrl+Alt+F3}), arrêt des services non essentiels.
+    
+    \item \textbf{Gestion de la fréquence CPU :} Le gouverneur de fréquence a été configuré en mode « performance » pour éviter les variations de fréquence pendant les mesures :
+    \begin{verbatim}
+    sudo cpupower frequency-set -g performance
+    \end{verbatim}
+    
+    \item \textbf{Affinage du processus :} Utilisation de \texttt{taskset} pour fixer l'exécution sur un seul P-core :
+    \begin{verbatim}
+    taskset -c 0 ./benchmark
+    \end{verbatim}
+    
+    \item \textbf{Priorité d'exécution :} Exécution avec priorité temps réel quand possible :
+    \begin{verbatim}
+    sudo nice -n -20 ./benchmark
+    \end{verbatim}
+\end{enumerate}
+
+\textbf{Difficultés rencontrées :} Sur un système moderne avec Turbo Boost et un noyau préemptif, il est difficile d'obtenir des conditions parfaitement reproductibles. Nous avons donc effectué de multiples répétitions et conservé les valeurs minimales (représentant le cas sans interférence).
+
+\newpage
+
+% ============================================================
+% EXERCICE 1
+% ============================================================
+\section{Exercice 1 : Détection des tailles de cache par mesure de latence}
+
+L'objectif de cet exercice est de tracer la courbe de latence d'accès mémoire en fonction de la taille des données (\textit{working set}), afin de visualiser les « marches » correspondant aux transitions entre les niveaux de cache.
+
+\subsection{Problématique : L'échec de la mesure naïve}
+
+Lors de nos premières expérimentations, nous avons utilisé un accès mémoire séquentiel (lire \texttt{tab[0]}, puis \texttt{tab[1]}, etc.) ou avec un pas fixe (\textit{stride}). Les résultats obtenus étaient déconcertants : la courbe de latence restait désespérément plate, aux alentours de 2 à 3 nanosecondes, même pour des tailles de données dépassant largement la taille du cache L3 (24~Mo).
+
+\subsubsection{Analyse du problème}
+
+Le processeur i7-13650HX dispose d'une unité de \textit{Hardware Prefetching} très performante. Cette unité surveille les motifs d'accès mémoire et, lorsqu'elle détecte un accès linéaire ou à pas fixe, elle précharge automatiquement les lignes de cache suivantes depuis la RAM \textbf{avant même} que le programme n'en ait besoin.
+
+Conséquence : nous ne mesurions pas la latence de la RAM, mais simplement la vitesse à laquelle le CPU peut consommer des données déjà présentes en cache L1/L2.
+
+\subsection{Solution : Pointer Chasing avec randomisation}
+
+Pour mesurer la latence réelle, il est impératif de briser la localité spatiale. Le CPU ne doit pas pouvoir deviner quelle sera la prochaine adresse mémoire à lire.
+
+\subsubsection{Principe du Pointer Chasing}
+
+Nous avons implémenté la technique du \textbf{Pointer Chasing} : chaque case mémoire contient l'adresse de la case suivante à visiter. Ainsi, le CPU doit attendre le retour de la donnée \texttt{*p} avant de connaître l'adresse suivante \texttt{p}, créant une dépendance de données qui empêche toute anticipation.
+
+Cependant, un chaînage linéaire (1 $\rightarrow$ 2 $\rightarrow$ 3 $\rightarrow$ ...) ne suffit pas car le prefetcher peut encore détecter le motif. Nous avons donc implémenté l'algorithme de mélange de \textbf{Fisher-Yates} pour randomiser totalement l'ordre de visite des lignes de cache.
+
+\subsubsection{Implémentation}
+
+\begin{lstlisting}[language=C, caption=Création de la chaîne de pointeurs aléatoire]
+void create_pointer_chain(void **array, size_t size_bytes, 
+                          size_t stride) {
+    size_t count = size_bytes / stride;
+    size_t *indices = malloc(count * sizeof(size_t));
+    size_t step_index = stride / sizeof(void*);
+    
+    // Initialisation des indices
+    for (size_t i = 0; i < count; i++) {
+        indices[i] = i * step_index;
+    }
+    
+    // Melange de Fisher-Yates
+    for (size_t i = count - 1; i > 0; i--) {
+        size_t j = rand() % (i + 1);
+        size_t temp = indices[i];
+        indices[i] = indices[j];
+        indices[j] = temp;
+    }
+    
+    // Chainage des pointeurs selon l'ordre melange
+    for (size_t i = 0; i < count - 1; i++) {
+        array[indices[i]] = (void*)&array[indices[i+1]];
+    }
+    // Fermeture du cycle
+    array[indices[count-1]] = (void*)&array[indices[0]];
+    
+    free(indices);
+}
+\end{lstlisting}
+
+La boucle de mesure est alors très simple :
+
+\begin{lstlisting}[language=C, caption=Boucle de mesure avec dépendance de données]
+double measure_latency(void **array, size_t num_accesses) {
+    void **p = array;
+    uint64_t start = get_time_ns();
+    
+    for (size_t i = 0; i < num_accesses; i++) {
+        p = (void **)*p;  // Dependance: adresse suivante = *p
+    }
+    
+    uint64_t end = get_time_ns();
+    sink = p;  // Empeche l'optimisation
+    return (double)(end - start) / (double)num_accesses;
+}
+\end{lstlisting}
+
+\subsection{Résultats expérimentaux}
+
+La figure~\ref{fig:cache_latency} présente la courbe de latence obtenue avec notre implémentation du Pointer Chasing aléatoire.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{exercice1/cache_latency.pdf}
+    \caption{Latence d'accès mémoire en fonction de la taille du working set (Pointer Chasing aléatoire, échelle log-log)}
+    \label{fig:cache_latency}
+\end{figure}
+
+\subsection{Analyse des résultats}
+
+L'analyse de la courbe révèle clairement la topologie mémoire du i7-13650HX :
+
+\begin{enumerate}
+    \item \textbf{Zone L1 (1 -- 48 Ko) :} Latence stable et minimale d'environ \textbf{1,1~ns}. Cette valeur représente le coût d'un accès au cache L1 Data, confirmant sa taille de 48~Ko.
+    
+    \item \textbf{Zone L2 (64 Ko -- 1,25 Mo) :} Premier décrochage vers \textbf{3,2~ns}. Cette augmentation correspond à la transition vers le cache L2. La marche est visible autour de 64~Ko, ce qui confirme le débordement du L1.
+    
+    \item \textbf{Zone L3 (1,5 Mo -- 24 Mo) :} La latence augmente progressivement jusqu'à environ \textbf{15-20~ns}. Le cache L3 étant partagé entre tous les cœurs et de grande taille (24~Mo), le temps d'accès varie selon la localisation des données dans la structure de cache.
+    
+    \item \textbf{Zone RAM (> 24 Mo) :} Au-delà de 24~Mo, la latence explose pour atteindre \textbf{71~ns} à 64~Mo. C'est le \textit{Memory Wall} : le coût d'un défaut de cache L3 (\textit{cache miss}) qui nécessite un accès à la DDR5.
+\end{enumerate}
+
+Le tableau~\ref{tab:latences_mesurees} résume les latences mesurées et les compare aux valeurs théoriques.
+
+\begin{table}[H]
+\centering
+\caption{Comparaison des latences mesurées et théoriques}
+\label{tab:latences_mesurees}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Niveau} & \textbf{Latence mesurée} & \textbf{Latence typique} & \textbf{Ratio vs L1} \\
+\midrule
+L1 Cache & $\approx$ 1,1 ns & 1--2 ns & 1x \\
+L2 Cache & $\approx$ 3,2 ns & 3--4 ns & 3x \\
+L3 Cache & $\approx$ 15-20 ns & 10--20 ns & 15x \\
+RAM DDR5 & $\approx$ 71 ns & 60--80 ns & 65x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Observation clé :} Le ratio de latence entre le L1 et la RAM est d'environ \textbf{65x}. Cela illustre parfaitement pourquoi les optimisations de localité mémoire sont cruciales en HPC : un programme avec de nombreux \textit{cache misses} peut être 65 fois plus lent qu'un programme bien optimisé !
+
+\newpage
+
+% ============================================================
+% EXERCICE 2
+% ============================================================
+\section{Exercice 2 : Évaluation de la bande passante mémoire}
+
+Si l'exercice 1 mesurait le temps d'attente (latence), l'exercice 2 mesure le débit (bande passante). L'objectif est d'évaluer la quantité de données que le processeur peut transférer par unité de temps depuis les différents niveaux de la hiérarchie mémoire.
+
+\subsection{Partie 1 : Impact du pas d'accès (Stride)}
+
+Nous avons mesuré la bande passante en faisant varier le pas d'accès lors de la lecture d'un grand tableau (96~Mo, soit 4 fois la taille du L3).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{exercice2/bandwidth.pdf}
+    \caption{Évolution de la bande passante en fonction du pas d'accès}
+    \label{fig:bandwidth_stride}
+\end{figure}
+
+\subsubsection{Analyse des résultats}
+
+Le graphique de la figure~\ref{fig:bandwidth_stride} révèle plusieurs phénomènes :
+
+\begin{enumerate}
+    \item \textbf{Pas faible (64 octets) :} Bande passante maximale d'environ \textbf{35~Go/s}. À ce pas, chaque ligne de cache chargée est entièrement utilisée, et le prefetcher peut anticiper les accès suivants.
+    
+    \item \textbf{Pas de 4~Ko (taille d'une page) :} Effondrement brutal à environ \textbf{5-6~Go/s}. Cette chute s'explique par la saturation du \textbf{TLB} (\textit{Translation Lookaside Buffer}). À chaque accès avec un pas de 4~Ko, le processeur accède à une nouvelle page virtuelle, ce qui nécessite une traduction d'adresse. Quand le nombre de pages dépasse la capacité du TLB, chaque accès provoque un \textit{TLB miss} coûteux.
+    
+    \item \textbf{Pas très grands (> 64~Ko) :} La bande passante continue de diminuer vers \textbf{2-3~Go/s} car le prefetcher est totalement inefficace et chaque accès génère un \textit{cache miss} complet.
+\end{enumerate}
+
+\subsection{Partie 2 : Transition Cache L3 / RAM}
+
+Pour isoler la bande passante réelle de chaque niveau mémoire, nous avons réalisé un test d'accès séquentiel en faisant varier la taille du buffer.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{exercice2/bandwidth_seq.pdf}
+    \caption{Bande passante séquentielle en fonction de la taille du buffer (ligne verticale : limite L3 = 24~Mo)}
+    \label{fig:bandwidth_seq}
+\end{figure}
+
+\subsubsection{Analyse des résultats}
+
+Le graphique de la figure~\ref{fig:bandwidth_seq} illustre parfaitement la transition Cache/RAM :
+
+\begin{itemize}
+    \item \textbf{Zone < 24~Mo :} Le débit est très élevé, entre \textbf{23 et 30~Go/s}. Les données tiennent entièrement dans le cache L3, et le prefetcher peut alimenter le processeur efficacement.
+    
+    \item \textbf{Point de rupture (24~Mo) :} Entre 16~Mo et 32~Mo, la courbe chute brutalement. C'est la \textbf{preuve expérimentale} que le cache L3 de notre i7-13650HX fait bien 24~Mo.
+    
+    \item \textbf{Zone > 24~Mo :} La courbe se stabilise autour de \textbf{16~Go/s}. C'est la bande passante effective de la DDR5 pour un seul cœur CPU.
+\end{itemize}
+
+\subsubsection{Discussion sur la bande passante RAM}
+
+La DDR5-4800 de notre système a une bande passante théorique de :
+\[
+\text{BP}_{\text{théorique}} = 4800 \times 10^6 \times 8 \times 2 = 76,8 \text{ Go/s}
+\]
+
+(4800 MT/s $\times$ 8 octets par transfert $\times$ 2 canaux)
+
+Cependant, nous mesurons seulement $\approx$16~Go/s pour un seul cœur. Cette différence s'explique par plusieurs facteurs :
+
+\begin{enumerate}
+    \item Un seul cœur ne peut pas saturer le bus mémoire à lui seul.
+    \item Le contrôleur mémoire doit gérer les \textit{Row Buffer Misses}.
+    \item Les protocoles de cohérence de cache ajoutent de la latence.
+\end{enumerate}
+
+\newpage
+
+% ============================================================
+% EXERCICE 5
+% ============================================================
+\section{Exercice 5 : L'outil Calibrator}
+
+L'outil \texttt{calibrator} est un micro-benchmark de référence développé par Stefan Manegold au CWI (Centrum Wiskunde \& Informatica) aux Pays-Bas. Il utilise une méthodologie sophistiquée pour détecter automatiquement les caractéristiques de la hiérarchie mémoire.
+
+\subsection{Défis de portage et compilation}
+
+L'utilisation d'un code source datant de plus de 20 ans sur un système moderne (GCC 13, Ubuntu 24.04) a nécessité un travail d'adaptation que l'on peut qualifier d'« archéologie logicielle ».
+
+\subsubsection{Conflit de nom avec la fonction round()}
+
+Nous avons rencontré une erreur bloquante lors de la compilation :
+
+\begin{verbatim}
+calibrator.c:131:5: error: conflicting types for 'round'
+  131 | lng round(dbl x)
+\end{verbatim}
+
+\textbf{Cause :} Le code original définissait sa propre fonction \texttt{round()}. Or, depuis la norme C99, \texttt{round()} est une fonction standard de la bibliothèque mathématique \texttt{libm}, déclarée dans \texttt{<math.h>}.
+
+\textbf{Solution :} Nous avons modifié le code source pour renommer la fonction interne en \texttt{my\_round()} :
+
+\begin{verbatim}
+sed -i 's/lng round/lng my_round/g' calibrator.c
+sed -i 's/round(/my_round(/g' calibrator.c
+\end{verbatim}
+
+\subsubsection{Gestion de la fréquence CPU}
+
+Calibrator nécessite de connaître la fréquence CPU pour convertir les temps en cycles. Sur le i7-13650HX avec Turbo Boost, la fréquence varie dynamiquement. Nous avons utilisé la fréquence de base (2600~MHz) comme référence :
+
+\begin{verbatim}
+./calibrator 2600 128M results
+\end{verbatim}
+
+\subsection{Méthodologie de Calibrator}
+
+Contrairement à notre benchmark de l'exercice 1, Calibrator utilise une approche bidimensionnelle : il fait varier simultanément la taille du buffer (\textit{Range}) et le pas d'accès (\textit{Stride}). Cette méthode permet de détecter :
+
+\begin{itemize}
+    \item Les tailles et latences des caches (en fixant le stride à la taille de ligne cache)
+    \item Les caractéristiques du TLB (en utilisant un stride égal à la taille de page)
+\end{itemize}
+
+\subsection{Résultats Calibrator}
+
+La figure~\ref{fig:calibrator} présente les graphiques générés par Calibrator.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{exercice5/calibrator_results.pdf}
+    \caption{Résultats Calibrator : (Haut) Latence Cache, (Bas) Latence TLB}
+    \label{fig:calibrator}
+\end{figure}
+
+\subsubsection{Analyse du graphique de latence cache}
+
+Le graphique supérieur montre deux courbes :
+\begin{itemize}
+    \item \textbf{Accès séquentiel :} Latence basse et relativement stable grâce au prefetcher.
+    \item \textbf{Accès optimisé (pointer chasing) :} Montre clairement les paliers correspondant aux différents niveaux de cache.
+\end{itemize}
+
+\subsubsection{Analyse du graphique TLB}
+
+Le graphique inférieur (\textit{TLB Latency}) est particulièrement intéressant. Il montre :
+\begin{itemize}
+    \item Une latence faible tant que le nombre de pages accédées reste inférieur à la capacité du TLB L1 ($\approx$64 entrées).
+    \item Une augmentation significative au-delà, correspondant aux \textit{TLB misses} qui déclenchent des \textit{Page Walks} coûteux dans les tables de pages.
+\end{itemize}
+
+\subsection{Comparaison : Notre benchmark vs Calibrator}
+
+\begin{table}[H]
+\centering
+\caption{Comparaison des approches}
+\label{tab:comparaison}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Critère} & \textbf{Notre Benchmark (Ex.1)} & \textbf{Calibrator} \\
+\midrule
+Approche & Variation taille uniquement & Variation taille + stride \\
+Visualisation & Courbe simple, lisible & Graphiques détaillés \\
+Détection TLB & Non & Oui \\
+Portabilité & Moderne, compile facilement & Nécessite adaptations \\
+Automatisation & Manuelle & Détection automatique \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Calibrator est plus complet mais plus complexe. Notre approche a l'avantage de la simplicité et de la lisibilité des résultats.
+
+\newpage
+
+% ============================================================
+% CONCLUSION
+% ============================================================
+\section{Conclusion}
+
+Ce projet nous a permis de confronter la théorie vue en cours à la réalité complexe d'un processeur moderne. Au-delà des simples mesures, nous avons acquis une compréhension profonde des mécanismes qui régissent les performances mémoire.
+
+\subsection{Enseignements techniques}
+
+\begin{enumerate}
+    \item \textbf{La mesure est un art difficile :} Les mécanismes d'optimisation matériels (Prefetching, Turbo Boost, exécution \textit{out-of-order}) tentent activement de masquer les caractéristiques réelles du système. Sans protocole adapté (Pointer Chasing aléatoire, contrôle de la fréquence), les mesures sont faussées.
+    
+    \item \textbf{La hiérarchie mémoire est tangible :} Nous avons pu « voir » physiquement la limite des 24~Mo du cache L3 sur nos courbes de bande passante. La transition Cache/RAM n'est pas une abstraction théorique, c'est un phénomène mesurable avec des conséquences directes sur les performances.
+    
+    \item \textbf{Le coût du cache miss est énorme :} Le ratio de latence entre L1 et RAM est d'environ 65x. Un algorithme qui génère beaucoup de \textit{cache misses} peut être des dizaines de fois plus lent qu'un algorithme bien optimisé travaillant sur les mêmes données.
+\end{enumerate}
+
+\subsection{Implications pour le développement HPC}
+
+Ces expériences confirment l'importance cruciale de la « \textit{Memory Awareness} » dans le développement d'applications hautes performances :
+
+\begin{itemize}
+    \item \textbf{Favoriser la localité spatiale :} Accéder aux données de manière séquentielle pour bénéficier du prefetcher et maximiser l'utilisation de chaque ligne de cache.
+    
+    \item \textbf{Favoriser la localité temporelle :} Réutiliser les données tant qu'elles sont en cache (technique du \textit{blocking} ou \textit{tiling}).
+    
+    \item \textbf{Dimensionner les structures de données :} Adapter la taille des buffers de travail aux capacités des caches pour éviter les débordements.
+    
+    \item \textbf{Attention au TLB :} Éviter les accès avec des pas de 4~Ko qui saturent le TLB.
+\end{itemize}
+
+\subsection{Perspectives}
+
+Ce travail pourrait être étendu de plusieurs manières :
+
+\begin{itemize}
+    \item Mesurer l'impact du multithreading sur la bande passante partagée du L3.
+    \item Comparer les performances entre P-cores et E-cores de l'architecture hybride.
+    \item Utiliser les compteurs matériels de performance (\texttt{perf}) pour corréler les mesures de temps avec les événements micro-architecturaux (cache misses, TLB misses, etc.).
+\end{itemize}
+
+En conclusion, ce projet démontre que même sur des processeurs modernes hautement optimisés, la compréhension fine de la hiérarchie mémoire reste un prérequis indispensable pour quiconque souhaite développer des applications véritablement performantes.
+
+\newpage
+
+% ============================================================
+% BIBLIOGRAPHIE
+% ============================================================
+\begin{thebibliography}{9}
+
+\bibitem{manegold2002}
+S.~Manegold, P.~Boncz, et M.~Kersten,
+\textit{Generic Database Cost Models for Hierarchical Memory Systems},
+Proceedings of the 28th VLDB Conference, 2002.
+
+\bibitem{drepper2007}
+U.~Drepper,
+\textit{What Every Programmer Should Know About Memory},
+Red Hat, Inc., 2007.
+\url{https://people.freebsd.org/~lstewart/articles/cpumemory.pdf}
+
+\bibitem{calibrator}
+S.~Manegold,
+\textit{Calibrator: A Cache-Memory and TLB Calibration Tool},
+CWI Amsterdam.
+\url{http://homepages.cwi.nl/~manegold/Calibrator/}
+
+\bibitem{intel2023}
+Intel Corporation,
+\textit{Intel 64 and IA-32 Architectures Optimization Reference Manual},
+Order Number: 248966-047, 2023.
+
+\bibitem{hennessy2019}
+J.~L.~Hennessy et D.~A.~Patterson,
+\textit{Computer Architecture: A Quantitative Approach},
+6th Edition, Morgan Kaufmann, 2019.
+
+\end{thebibliography}
+
+\end{document}

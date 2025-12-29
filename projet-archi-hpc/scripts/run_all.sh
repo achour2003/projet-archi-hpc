@@ -38,15 +38,14 @@ print_info() {
 
 # Configuration
 CPU_TO_USE=0  # CPU sur lequel exécuter les benchmarks
-CPU_MHZ=${CPU_MHZ:-3000}  # Fréquence CPU pour Calibrator (à ajuster)
+CPU_MHZ=${CPU_MHZ:-3000}  # Fréquence CPU par défaut
 
 # Vérification des prérequis
 check_prerequisites() {
     print_header "Vérification des prérequis"
     
     local missing=0
-    
-    for tool in gcc gnuplot; do
+    for tool in gcc gnuplot make; do
         if command -v $tool &> /dev/null; then
             print_success "$tool installé"
         else
@@ -56,84 +55,63 @@ check_prerequisites() {
     done
     
     if [[ $missing -eq 1 ]]; then
-        echo ""
-        echo "Installez les outils manquants avec:"
-        echo "  sudo apt install build-essential gnuplot"
+        echo "Installez les outils : sudo apt install build-essential gnuplot"
         exit 1
     fi
     
-    # Vérifier taskset
     if ! command -v taskset &> /dev/null; then
-        print_info "taskset non disponible - les benchmarks ne seront pas fixés à un CPU"
+        print_info "taskset non disponible"
         TASKSET_CMD=""
     else
         TASKSET_CMD="taskset -c $CPU_TO_USE"
-        print_success "taskset disponible - utilisation du CPU $CPU_TO_USE"
+        print_success "Utilisation du CPU $CPU_TO_USE via taskset"
     fi
 }
 
 # Exercice 1
 run_exercice1() {
     print_header "Exercice 1: Détection des tailles de cache"
-    
     cd "$PROJECT_DIR/exercice1"
     
-    print_info "Compilation..."
+    print_info "Nettoyage et Compilation..."
     make clean 2>/dev/null || true
     make
-    print_success "Compilation réussie"
     
-    print_info "Exécution du benchmark..."
+    print_info "Exécution et génération du graphe..."
     $TASKSET_CMD ./cache_benchmark > resultats.csv 2>/dev/null
-    print_success "Données collectées dans resultats.csv"
-    
-    print_info "Génération du graphique..."
-    gnuplot plot_cache.gp 2>/dev/null || print_error "Erreur gnuplot (non bloquant)"
+    gnuplot plot_cache.gp 2>/dev/null || print_error "Erreur gnuplot"
     
     if [[ -f cache_latency.pdf ]]; then
-        print_success "Graphique généré: cache_latency.pdf"
+        print_success "Généré : cache_latency.pdf"
     fi
-    
     cd "$PROJECT_DIR"
 }
 
 # Exercice 2
 run_exercice2() {
     print_header "Exercice 2: Bande passante mémoire"
-    
     cd "$PROJECT_DIR/exercice2"
     
-    print_info "Compilation..."
+    print_info "Nettoyage et Compilation..."
     make clean 2>/dev/null || true
     make
-    print_success "Compilation réussie"
     
-    print_info "Exécution du benchmark..."
+    print_info "Exécution et génération des graphes..."
     $TASKSET_CMD ./bandwidth_benchmark > resultats.csv 2>/dev/null
-    print_success "Données collectées dans resultats.csv"
+    gnuplot plot_bandwidth.gp 2>/dev/null || print_error "Erreur gnuplot"
     
-    print_info "Génération du graphique..."
-    gnuplot plot_bandwidth.gp 2>/dev/null || print_error "Erreur gnuplot (non bloquant)"
-    
-    if [[ -f bandwidth.pdf ]]; then
-        print_success "Graphique généré: bandwidth.pdf"
+    if [[ -f bandwidth.pdf && -f bandwidth_seq.pdf ]]; then
+        print_success "Générés : bandwidth.pdf et bandwidth_seq.pdf"
     fi
-    
     cd "$PROJECT_DIR"
 }
 
-# Exercice 5
+# Exercice 5 (Version Améliorée via Makefile)
 run_exercice5() {
     print_header "Exercice 5: Calibrator"
-    
     cd "$PROJECT_DIR/exercice5"
     
-    print_info "Compilation..."
-    make clean 2>/dev/null || true
-    make
-    print_success "Compilation réussie"
-    
-    # Détection automatique de la fréquence si possible
+    # 1. Détection de fréquence
     if [[ -f /proc/cpuinfo ]]; then
         detected_mhz=$(grep "cpu MHz" /proc/cpuinfo | head -1 | awk '{print int($4)}')
         if [[ -n "$detected_mhz" && "$detected_mhz" -gt 0 ]]; then
@@ -142,145 +120,108 @@ run_exercice5() {
         fi
     fi
     
-    print_info "Exécution de Calibrator (CPU_MHZ=$CPU_MHZ, taille=64M)..."
-    $TASKSET_CMD ./calibrator $CPU_MHZ 64M results 2>/dev/null
-    print_success "Calibrator terminé"
+    print_info "Lancement via Makefile (Compilation + Bench + Plot)..."
     
-    print_info "Génération des graphiques..."
-    for gp_file in results*.gp; do
-        if [[ -f "$gp_file" ]]; then
-            gnuplot "$gp_file" 2>/dev/null || true
-        fi
-    done
-    
-    # Liste des fichiers générés
-    print_success "Fichiers générés:"
-    ls -la results* 2>/dev/null | while read line; do
-        echo "  $line"
-    done
+    # On délègue tout au Makefile qui sait quoi faire
+    # On utilise taskset sur make pour que le processus fils (calibrator) en hérite
+    if [ -n "$TASKSET_CMD" ]; then
+        $TASKSET_CMD make benchmark MHZ=$CPU_MHZ
+    else
+        make benchmark MHZ=$CPU_MHZ
+    fi
+
+    # Vérification
+    if [[ -f calibrator_results.pdf ]]; then
+        print_success "Graphique généré : calibrator_results.pdf"
+    else
+        print_error "Le graphique n'a pas été généré."
+    fi
     
     cd "$PROJECT_DIR"
 }
 
-# Collecte des infos système
-collect_system_info() {
-    print_header "Collecte des informations système"
+# Génération des graphiques uniquement
+generate_graphs() {
+    print_header "Régénération des graphiques (Sans Benchmark)"
+    
+    # Ex 1
+    if [[ -d "$PROJECT_DIR/exercice1" ]]; then
+        cd "$PROJECT_DIR/exercice1" && gnuplot plot_cache.gp 2>/dev/null && print_success "PDF Ex1 OK" || print_error "Ex1 Fail"
+    fi
+
+    # Ex 2
+    if [[ -d "$PROJECT_DIR/exercice2" ]]; then
+        cd "$PROJECT_DIR/exercice2" && gnuplot plot_bandwidth.gp 2>/dev/null && print_success "PDF Ex2 OK" || print_error "Ex2 Fail"
+    fi
+
+    # Ex 5 (Via Makefile 'make plot')
+    if [[ -d "$PROJECT_DIR/exercice5" ]]; then
+        cd "$PROJECT_DIR/exercice5"
+        make plot 2>/dev/null && print_success "PDF Ex5 OK" || print_error "Ex5 Fail (Données manquantes ?)"
+    fi
     
     cd "$PROJECT_DIR"
-    chmod +x scripts/collect_info.sh
-    ./scripts/collect_info.sh system_info.txt
-    
-    print_success "Informations sauvegardées dans system_info.txt"
 }
 
-# Création de l'archive finale
+# Création de l'archive
 create_archive() {
     print_header "Création de l'archive finale"
-    
     cd "$PROJECT_DIR"
     
-    # Demander le nom
     read -p "Entrez votre NOM: " nom
     read -p "Entrez votre Prénom: " prenom
     
     archive_name="Projet-${nom}-${prenom}.tar.gz"
-    
     print_info "Création de $archive_name..."
     
-    tar -czvf "$archive_name" \
-        exercice1/ \
-        exercice2/ \
-        exercice5/ \
-        rapport/ \
-        README.md \
-        system_info.txt \
-        2>/dev/null
+    tar -czvf "$archive_name" exercice1/ exercice2/ exercice5/ rapport/ README.md system_info.txt 2>/dev/null
     
-    print_success "Archive créée: $archive_name"
-    echo ""
-    echo "Taille de l'archive: $(du -h "$archive_name" | cut -f1)"
+    print_success "Archive prête : $archive_name"
 }
 
-# Menu principal
+# Menu
 show_menu() {
     echo ""
-    echo "Que souhaitez-vous faire ?"
-    echo ""
-    echo "  1) Exécuter tous les exercices"
-    echo "  2) Exercice 1 uniquement (caches)"
-    echo "  3) Exercice 2 uniquement (bande passante)"
-    echo "  4) Exercice 5 uniquement (Calibrator)"
-    echo "  5) Collecter les infos système"
-    echo "  6) Créer l'archive finale"
-    echo "  7) Tout faire (1 + 5 + 6)"
-    echo "  q) Quitter"
+    echo "1) Tout exécuter (Benchmarks + Graphes)"
+    echo "2) Exercice 1 (Caches)"
+    echo "3) Exercice 2 (Bande passante)"
+    echo "4) Exercice 5 (Calibrator)"
+    echo "5) Collecter infos système"
+    echo "6) Créer l'archive"
+    echo "7) Tout faire"
+    echo "8) Régénérer uniquement les graphiques"
+    echo "q) Quitter"
     echo ""
     read -p "Votre choix: " choice
     
     case $choice in
-        1)
-            run_exercice1
-            run_exercice2
-            run_exercice5
-            ;;
-        2)
-            run_exercice1
-            ;;
-        3)
-            run_exercice2
-            ;;
-        4)
-            run_exercice5
-            ;;
-        5)
-            collect_system_info
-            ;;
-        6)
-            create_archive
-            ;;
-        7)
-            run_exercice1
-            run_exercice2
-            run_exercice5
-            collect_system_info
-            create_archive
-            ;;
-        q|Q)
-            echo "Au revoir!"
-            exit 0
-            ;;
-        *)
-            print_error "Choix invalide"
-            show_menu
-            ;;
+    1) run_exercice1; run_exercice2; run_exercice5 ;;
+    2) run_exercice1 ;;
+    3) run_exercice2 ;;
+    4) run_exercice5 ;;
+    5) ./scripts/collect_info.sh system_info.txt ;;
+    6) create_archive ;;
+    7) run_exercice1; run_exercice2; run_exercice5; ./scripts/collect_info.sh system_info.txt; create_archive ;;
+    8) generate_graphs ;;
+    q|Q) exit 0 ;;
+    *) show_menu ;;
     esac
 }
 
 # Main
-print_header "Projet Architecture HPC - Script d'exécution"
-
+print_header "Architecture HPC - Manager"
 check_prerequisites
 
-# Si argument passé, exécuter directement
 if [[ $# -gt 0 ]]; then
     case $1 in
-        all) 
-            run_exercice1
-            run_exercice2
-            run_exercice5
-            ;;
-        ex1) run_exercice1 ;;
-        ex2) run_exercice2 ;;
-        ex5) run_exercice5 ;;
-        info) collect_system_info ;;
-        archive) create_archive ;;
-        *)
-            echo "Usage: $0 [all|ex1|ex2|ex5|info|archive]"
-            exit 1
-            ;;
+    all) run_exercice1; run_exercice2; run_exercice5 ;;
+    ex5) run_exercice5 ;;
+    graphs) generate_graphs ;;
+    archive) create_archive ;;
+    *) show_menu ;;
     esac
 else
     show_menu
 fi
 
-print_header "Terminé!"
+print_header "Opération terminée"

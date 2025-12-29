@@ -1,31 +1,252 @@
-# Déclaration d'usage d'IA Générative
-# Projet Architecture des Processeurs Hautes Performances
-# =========================================================
+================================================================================
+DÉCLARATION D'USAGE D'INTELLIGENCE ARTIFICIELLE GÉNÉRATIVE
+Projet : Architecture des Processeurs Hautes Performances
+================================================================================
 
-Nom: [VOTRE NOM]
-Prénom: [VOTRE PRÉNOM]
+Nom de l'étudiant : Achour Djerada
+Date : Décembre 2024 - Janvier 2025
 
-# Informations sur l'IAG utilisée
-Nom de l'IAG: Claude
-Version: Claude Opus 4.5
-Niveau d'accès: [gratuit / pro / premium]
+--------------------------------------------------------------------------------
+OUTILS UTILISÉS
+--------------------------------------------------------------------------------
+Outil principal :
+  Nom              : Claude (Anthropic)
+  Version          : Claude 4.5 Sonnet
+  Niveau d'accès   : Pro (via claude.ai)
 
-# Contexte d'usage
-# Décrivez dans quelle partie du projet vous avez utilisé l'IAG
+Outil secondaire :
+  Nom              : Gemini (Google)
+  Version          : Gemini 2.0 Flash
+  Niveau d'accès   : Gratuit
+  Usage            : Aide à la compréhension de certains concepts, 
+                     vérification de certaines informations
 
-Partie(s) du projet concernée(s):
-- Mise en place de l'environnement de travail et structure du projet
-- Création des templates de code pour les micro-benchmarks
-- Création du template LaTeX pour le rapport
-- Compréhension de l'outil Calibrator
+--------------------------------------------------------------------------------
+CONTEXTE D'USAGE
+--------------------------------------------------------------------------------
 
-# Historique des prompts
-# Listez ci-dessous les requêtes que vous avez soumises à l'IAG
-# (Ne pas inclure les réponses de l'IAG)
+L'IA générative a été utilisée dans les contextes suivants :
 
-## Prompt 1
-[Date: VOTRE_DATE]
-"voila mon projet, le truc de calibrator je ne le comprend pas; je suis sous ubuntu le prof a demandé debian ou fedora mais a mon avis ca ne changera rien; je veux que on commance par la creation d'un bon environement de travail sachant que j'ai deja gcc, donc on passera a la creation d'un repo github"
+1. AMÉLIORATION DU RAPPORT LATEX
+   - Structuration et organisation des sections
+   - Correction des fautes de français et amélioration du style
+   - Aide pour la mise en forme des tableaux et figures
+   - Ajout de la page de titre avec logo
+   - Correction des erreurs de compilation LaTeX
 
-## Prompt 2
-[Ajoutez vos autres prompts ici]
+2. AIDE À LA PROGRAMMATION EN C
+   - Conseils sur la portabilité du code (utilisation de size_t, uint64_t)
+   - Ajout de volatile void *sink pour éviter les optimisations du compilateur
+   - Aide à la compréhension des erreurs de compilation
+   - Correction d'un bug de segmentation fault dans cache_benchmark.c
+   - Résolution du conflit de fonction round() dans calibrator.c
+   - Amélioration des commentaires dans le code
+
+3. CRÉATION DES SCRIPTS
+   - Scripts gnuplot pour générer les graphiques
+   - Scripts bash pour automatiser les benchmarks (prepare_machine.sh, etc.)
+   - README.md du projet
+
+4. ANALYSE DES RÉSULTATS
+   - Vérification de la cohérence des mesures
+   - Aide à l'interprétation des courbes
+
+5. BIBLIOGRAPHIE
+   - Recherche de références pertinentes
+   - Mise en forme des citations
+
+--------------------------------------------------------------------------------
+HISTORIQUE DES PROMPTS (requêtes soumises à l'IAG)
+--------------------------------------------------------------------------------
+
+NOTE IMPORTANTE : Ceci est une sélection des prompts les plus significatifs.
+De nombreux autres échanges ont eu lieu pour :
+- L'aide à la compréhension des concepts (prefetcher, TLB, cache associativity)
+- L'aide à l'installation des outils (texlive, gnuplot, cpupower)
+- La correction des erreurs de compilation LaTeX
+- Des questions diverses sur la syntaxe C et bash
+Ces prompts moins significatifs ne sont pas listés ici par souci de concision.
+
+--------------------------------------------------------------------------------
+
+PROMPT 1 (Début du projet):
+"salut , j'ai un projet a faire pour mon cours d'archi HPC , c'est sur la 
+hierarchie memoire et je dois faire des benchmark en C. tu peux m'aider ?"
+
+PROMPT 2 (Problème courbe plate):
+"j'ai un probleme avec mon benchmark , la courbe de latance est plate a 2ns
+meme quand je depasse la taille du cache L3. c'est bizard non ? pourquoi 
+ca marche pas ?"
+
+PROMPT 3 (Pointer chasing):
+"ok je comprend le prefetcher , mais comment je fait pour le desactiver ?
+tu peux m'expliquer le pointer chasing stp"
+
+PROMPT 4 (Portabilité du code):
+"est ce que mon code est bien ecrit ? est ce qu'il est portable sur d'autre
+machine ou c'est que pour linux ?"
+
+PROMPT 5 (Types portables):
+"ok donc je dois utiliser size_t et uint64_t au lieu de int et long ? tu 
+peux me montrer comment je modifie mon code ?"
+
+PROMPT 6 (Optimisation compilateur):
+"des fois le compilateur il supprime ma boucle de mesure parce qu'il voit 
+que je fait rien avec le resultat. comment je fait pour eviter ca ?"
+
+PROMPT 7 (volatile sink):
+"ah ok je rajoute volatile void *sink et je fait sink = p a la fin. comme 
+ca le compilateur il peut pas optimiser. c'est bien ca ?"
+
+PROMPT 8 (Bug segfault):
+"ca compile mais ca plante avec segmentation fault quand je lance le 
+programme. voici mon code : [code cache_benchmark.c]"
+
+PROMPT 9 (Correction malloc):
+"ah ok c'etait le malloc , j'avais oublier de multiplier par sizeof(void*).
+merci ! maintenant ca marche mais les resultats sont encore bizarre"
+
+PROMPT 10 (Fisher-Yates):
+"c'est quoi l'algo de fisher yates ? comment je l'implemente pour melanger
+les pointeurs ?"
+
+PROMPT 11 (Exercice 2):
+"bon l'exercice 1 c'est fait. maintenant je dois faire l'exercice 2 sur la
+bande passante. tu peux m'expliquer ce que je dois mesurer exactement ?"
+
+PROMPT 12 (Script gnuplot Ex1):
+"comment je fait un script gnuplot pour tracer ma courbe de latence ? je 
+veux une echelle logaritmique sur les deux axes"
+
+PROMPT 13 (Script gnuplot Ex2):
+"ok ca marche pour le premier graphe. maintenant j'ai besoin d'un autre 
+script pour le graphe de bande passante vs stride"
+
+PROMPT 14 (Script gnuplot Ex2 seq):
+"et un dernier script pour la bande passante sequentielle avec une ligne 
+verticale a 24Mo pour montrer la limite du L3"
+
+PROMPT 15 (Calibrator erreur):
+"j'essaye de compiler calibrator.c mais j'ai cette erreur : 
+'conflicting types for round'. c'est quoi le probleme ?"
+
+PROMPT 16 (Script gnuplot Ex5):
+"je dois aussi faire un graphe pour calibrator , tu peux me faire le script
+gnuplot ?"
+
+PROMPT 17 (Rapport structure):
+"maintenant je dois rediger le rapport en latex. voici les consignes du 
+prof [documents joints]. tu peux m'aider a structurer le rapport ?"
+
+PROMPT 18 (Rapport environnement):
+"il me demande de decrire l'environement experimental. qu'est ce que je 
+dois mettre exactement ? voici les infos de ma machine [system_info.txt]"
+
+PROMPT 19 (Script collect_info):
+"tu peux me faire un script bash qui collecte toutes les infos systeme 
+automatiquement ? comme ca je peux le relancer si besoin"
+
+PROMPT 20 (Script prepare_machine):
+"et un script pour preparer la machine avant les benchmarks ? genre 
+desactiver le turbo boost et mettre le gouverneur en performance"
+
+PROMPT 21 (Script run_all):
+"ca serait bien d'avoir un script qui fait tout automatiquement , compiler
+executer et generer les graphes pour les 3 exercices"
+
+PROMPT 22 (Analyse résultats):
+"voici mes resultats [fichiers csv + graphiques]. est ce que c'est coherent
+avec les specs de mon i7-13650HX ? les valeurs sont bonnes ?"
+
+PROMPT 23 (Conclusion):
+"aide moi a ecrire la conclusion du rapport. je veux montrer ce que j'ai 
+compris sur la hierarchie memoire et le memory wall"
+
+PROMPT 24 (Bibliographie):
+"j'ai besoin d'une bibliographie pour le rapport. tu peux me donner des 
+references sur la hierarchie memoire et les techniques de benchmark ?"
+
+PROMPT 25 (Liens biblio):
+"tu peux me donner les liens vers ces references ? comme ca je peux 
+verifier qu'elles existent vraiment"
+
+PROMPT 26 (README):
+"j'ai plein de fichiers maintenant , tu peux me faire un readme complet 
+pour expliquer comment utiliser le projet ?"
+
+PROMPT 27 (README amélioration):
+"c'est bien mais tu peux ajouter une section sur les problemes connus et 
+les solutions ? genre l'erreur de calibrator"
+
+PROMPT 28 (Commentaires code):
+"tu peux m'aider a mieux commenter mon code C ? le prof il aime bien quand
+c'est bien documenté"
+
+PROMPT 29 (Logo):
+"j'ai ajouter le logo de l'universite , comment je le met sur la page de 
+titre du rapport ?"
+
+PROMPT 30 (Chemins figures):
+"le rapport compile pas , il trouve pas les figures. c'est parce que le 
+rapport est dans un sous dossier non ?"
+
+PROMPT 31 (IAG.txt):
+"pour finir j'ai besoin du fichier IAG.txt pour declarer que j'ai utiliser
+l'IA. tu peux m'aider a le rediger ?"
+
+--------------------------------------------------------------------------------
+RÉFÉRENCES BIBLIOGRAPHIQUES FOURNIES PAR L'IAG
+--------------------------------------------------------------------------------
+
+[1] S. Manegold, P. Boncz, M. Kersten
+    "Generic Database Cost Models for Hierarchical Memory Systems"
+    Proceedings of the 28th VLDB Conference, 2002
+    
+[2] U. Drepper
+    "What Every Programmer Should Know About Memory"
+    Red Hat, Inc., 2007
+    https://people.freebsd.org/~lstewart/articles/cpumemory.pdf
+    
+[3] S. Manegold
+    "Calibrator: A Cache-Memory and TLB Calibration Tool"
+    CWI Amsterdam
+    http://homepages.cwi.nl/~manegold/Calibrator/
+    
+[4] Intel Corporation
+    "Intel 64 and IA-32 Architectures Optimization Reference Manual"
+    Order Number: 248966-047, 2023
+    https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
+    
+[5] J. L. Hennessy, D. A. Patterson
+    "Computer Architecture: A Quantitative Approach"
+    6th Edition, Morgan Kaufmann, 2019
+    ISBN: 978-0128119051
+
+--------------------------------------------------------------------------------
+DÉCLARATION D'HONNÊTETÉ
+--------------------------------------------------------------------------------
+
+Je déclare sur l'honneur que :
+
+- Le travail de programmation des micro-benchmarks a été réalisé par moi-même,
+  avec l'aide de l'IA pour améliorer la qualité et la portabilité du code
+  (utilisation de types standards comme size_t et uint64_t, ajout de 
+  volatile pour éviter les optimisations, amélioration des commentaires)
+  
+- Les expériences ont été conduites sur ma propre machine (Lenovo Legion 5)
+
+- Les données expérimentales présentées sont authentiques et n'ont pas été
+  modifiées ou inventées
+  
+- L'IA a été utilisée comme outil d'aide à la compréhension, au débogage et
+  à la rédaction, et non comme substitut à mon travail personnel
+  
+- J'ai compris et analysé personnellement les résultats obtenus
+
+- Les scripts fournis ont été générés avec l'aide de l'IA mais j'ai vérifié
+  leur fonctionnement et je comprends leur contenu
+
+- J'ai utilisé plusieurs outils d'IA (Claude et Gemini) de manière 
+  complémentaire pour mieux comprendre les concepts et résoudre les problèmes
+
+================================================================================
