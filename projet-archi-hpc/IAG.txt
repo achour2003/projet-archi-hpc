@@ -16,8 +16,8 @@ Outil principal :
 
 Outil secondaire :
   Nom              : Gemini (Google)
-  Version          : Gemini 2.0 Flash
-  Niveau d'accès   : Gratuit
+  Version          : Gemini 3.0 Flash
+  Niveau d'accès   : pro (gratuit pour les etudiant)
   Usage            : Aide à la compréhension de certains concepts, 
                      vérification de certaines informations
 
@@ -226,7 +226,7 @@ RÉFÉRENCES BIBLIOGRAPHIQUES FOURNIES PAR L'IAG
 DÉCLARATION D'HONNÊTETÉ
 --------------------------------------------------------------------------------
 
-Je déclare sur l'honneur que :
+Je déclare que :
 
 - Le travail de programmation des micro-benchmarks a été réalisé par moi-même,
   avec l'aide de l'IA pour améliorer la qualité et la portabilité du code
